@@ -14,8 +14,8 @@
     enable = true;
     previews = {
       web = {
-        # 使用 Python3 启动 8080 端口静态服务
-        command = ["python3" "-m" "http.server" "8080"];
+        # 强制 Node.js 读取 index.html 吐出流，解决 http-server 的权限转圈 Bug
+        command = ["node" "-e" "const http = require('http'), fs = require('fs'); http.createServer((req, res) => { res.writeHead(200, {'Content-Type': 'text/html'}); try { res.end(fs.readFileSync('index.html')); } catch(e) { res.end('<h1>Index.html Not Found</h1>'); } }).listen(8080);"];
         manager = "web";
       };
     };
