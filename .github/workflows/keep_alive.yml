@@ -34,9 +34,9 @@ jobs:
           import requests
 
           async def run_task():
-              # 1. 实现 8-12 分钟的随机性 (以秒为单位)
+              # 1. 实现 2-4 分钟的随机性 (以秒为单位)
               # 注意：GitHub Action 启动本身有延迟，这里做微调
-              wait_time = random.randint(480, 720) 
+              wait_time = random.randint(120, 240) 
               print(f"随机延迟触发：将在 {wait_time} 秒后开始访问...")
               # time.sleep(wait_time) # 如果需要极端不规则，取消此行注释
 
