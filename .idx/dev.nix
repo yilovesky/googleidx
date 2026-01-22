@@ -14,11 +14,8 @@
     enable = true;
     previews = {
       web = {
-        command = [
-          "node"
-          "-e"
-          "const http = require('http'); http.createServer((req, res) => { res.writeHead(200, {'Content-Type': 'text/html'}); res.end('<html><body style=\"background:#0f172a;color:#38bdf8;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-family:sans-serif\"><div><h1>IDX Service Active</h1><p>Status: Running</p></div></body></html>'); }).listen(8080);"
-        ];
+        # 监听 8080 端口，展示 index.html
+        command = ["python3" "-m" "http.server" "8080"];
         manager = "web";
       };
     };
