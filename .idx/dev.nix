@@ -1,18 +1,17 @@
 { pkgs, ... }: {
   channel = "stable-24.05";
-  packages = [ pkgs.unzip pkgs.wget pkgs.python3 pkgs.nodejs pkgs.lsof ];
+  packages = [ pkgs.unzip pkgs.wget pkgs.python3 ];
   idx.workspace = {
     onCreate.setup = "chmod +x *.sh 2>/dev/null || true";
-    onStart.run-all = "bash start.sh"; 
+    onStart.run-all = "bash start.sh";
   };
   idx.previews = {
     enable = true;
     previews = {
       web = {
-        # 这里的预览指向 8080 端口（网站端口）
-        command = ["node" "server.js"];
+        # 预览指向 8080 端口
+        command = ["python3" "-m" "http.server" "8080"];
         manager = "web";
-        env = { PORT = "8080"; };
       };
     };
   };
