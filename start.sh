@@ -1,38 +1,34 @@
 #!/bin/bash
 
-# 1. 物理清理所有旧进程
-pkill -9 nezha-agent
-pkill -9 cloudflared
-pkill -9 xray
-pkill -9 node
-sleep 2
+# 1. 自动架构下载并启动哪吒 (保持你最初的逻辑)
+ARCH=$(uname -m)
+[ "$ARCH" = "x86_64" ] && URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_amd64.zip" || URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_arm64.zip"
 
-# 2. 启动哪吒监控 (NK架构核心)
-# 请确保你的 config.yml 就在根目录，且内容正确
-if [ -f "config.yml" ]; then
-    nohup ./nezha-agent -c config.yml > nezha.log 2>&1 &
-    echo "✅ 哪吒启动指令已发出"
+if [ ! -f "nezha-agent" ]; then
+    wget -O nezha-agent.zip $URL && unzip -o nezha-agent.zip && chmod +x nezha-agent
+    rm -f nezha-agent.zip
 fi
-sleep 3
 
-# 3. 启动 iOS 26 网页 (在 8080 端口)
-nohup node server.js > web.log 2>&1 &
-echo "✅ 网页服务已在 8080 启动"
-sleep 2
+pkill -9 nezha-agent
+nohup ./nezha-agent -c config.yml > nezha.log 2>&1 &
+echo "✅ 哪吒已启动"
 
-# 4. 运行 Argosbx (它会自动通过 8001 端口打通隧道)
+# 2. 启动保活 Web (用回 Python，但端口改为 8080 避开节点 8001)
+pkill -f "python3 -m http.server"
+nohup python3 -m http.server 8080 > web.log 2>&1 &
+echo "✅ 保活服务器运行在 8080 端口"
+
+# 3. 运行你的 argosbx 逻辑 (保持原样)
 if [ -f "env.conf" ]; then
     source env.conf
-    echo "✅ 已载入 env.conf 变量"
 fi
 
-# 这里的逻辑是 1 1 (即安装并运行)
+chmod +x argosbx.sh
+# 自动运行你的 1 1 选项
 bash argosbx.sh <<EOF
 1
 1
 EOF
 
-# 5. 订阅更新
-sleep 5
-bash argosbx.sh list | grep -E 'vless://|vmess://|trojan://' > sub.txt
-echo "✅ 订阅已生成，所有任务完成"
+# 4. 终极保活：防止脚本执行完就退出 (这是之前网站打不开的主因)
+tail -f /dev/null
