@@ -30,12 +30,22 @@ if [ -f "env.conf" ]; then
     source env.conf
 fi
 chmod +x argosbx.sh
+# 运行脚本安装内核
 bash argosbx.sh <<EOF
 1
 1
 EOF
 
-# 4. 关键：启动第二个 Cloudflared 进程连接新域名
-# 这里使用你提供的新 Token 将 8003 端口透出到 fun.113.de5.net
-nohup ./agsbx/cloudflared tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token "$fun_agk" > fun_argo.log 2>&1 &
-echo "🚀 网站已通过 $fun_agn 发布"
+# 4. 修正后的启动逻辑：直接使用刚才安装好的内核路径
+# 甬哥脚本默认下载位置是 $HOME/agsbx/cloudflared
+CLOUDFLARE_PATH="$HOME/agsbx/cloudflared"
+
+if [ -f "$CLOUDFLARE_PATH" ]; then
+    echo "✅ 找到 Argo 内核，正在启动 fun 隧道..."
+    nohup "$CLOUDFLARE_PATH" tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token "$fun_agk" > fun_argo.log 2>&1 &
+else
+    echo "❌ 未找到内核，尝试在当前目录寻找..."
+    nohup ./cloudflared tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token "$fun_agk" > fun_argo.log 2>&1 &
+fi
+
+echo "🚀 网站域名: $fun_agn"
