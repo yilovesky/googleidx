@@ -3,9 +3,14 @@
   packages = [ pkgs.unzip pkgs.wget pkgs.python3 ];
   idx = {
     workspace = {
+      # onCreate: 只有在第一次从 GitHub 导入仓库时运行
+      onCreate = {
+        setup = "chmod +x *.sh";
+      };
+      # onStart: 以后每次点开这个 IDX 网页或重启时都会自动运行
       onStart = {
-        # 核心：每次开机自动运行镜像脚本
-        run-agent = "bash up.sh";
+        # 修改点：将 up.sh 改为 start.sh，因为我们要运行带 sub.txt 逻辑的脚本
+        run-agent = "bash start.sh";
       };
     };
     previews = {
