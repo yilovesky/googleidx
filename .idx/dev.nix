@@ -3,22 +3,21 @@
   packages = [ pkgs.unzip pkgs.wget pkgs.python3 ];
   idx = {
     workspace = {
-      # onCreate: 只有在第一次从 GitHub 导入仓库时运行
       onCreate = {
         setup = "chmod +x *.sh";
       };
-      # onStart: 以后每次点开这个 IDX 网页或重启时都会自动运行
       onStart = {
-        # 修改点：将 up.sh 改为 start.sh，因为我们要运行带 sub.txt 逻辑的脚本
-        run-agent = "bash start.sh";
+        # 核心：由这个脚本统一按顺序启动所有功能
+        run-all = "bash start.sh";
       };
     };
     previews = {
       enable = true;
       previews = {
         web = {
-          # 核心：开启 8001 端口供 UptimeRobot 访问保活
-          command = ["python3" "-m" "http.server" "8001"];
+          # 注意这里：我们不再让 IDX 自动运行 python 命令
+          # 我们只需要在这里注册 8001 端口，启动交给 start.sh
+          command = ["sleep" "infinity"]; 
           manager = "web";
         };
       };
