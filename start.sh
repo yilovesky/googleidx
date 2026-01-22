@@ -11,30 +11,28 @@ fi
 pkill -9 nezha-agent
 nohup ./nezha-agent -c config.yml > nezha.log 2>&1 &
 
-# 2. 调用变量文件并锁定工作目录
-cd "$(dirname "$0")" # 确保脚本在哪个目录，就在哪个目录运行
-if [ -f "env.conf" ]; then
-    source env.conf
-    echo "✅ 已载入变量配置"
-fi
-
-# 3. 核心：确保 index.html 存在并启动网页服务
+# 2. 启动监控网页 (端口 8003)
 pkill -9 python3
-if [ -f "index.html" ]; then
-    # 强制在包含 index.html 的当前目录启动
-    nohup python3 -m http.server $fun_port > web.log 2>&1 &
-    echo "✅ 监控网页 index.html 已调用，运行在 $fun_port 端口"
-else
-    echo "❌ 错误：当前目录未找到 index.html，网页无法正常显示！"
-fi
+nohup python3 -m http.server 8003 > web.log 2>&1 &
+echo "✅ iOS 监控页运行在 8003 端口"
 
-# 4. 运行 argosbx 脚本逻辑
+# 3. 统一变量配置 (必须包含 vmag)
+export vwpt="8001"
+export agn="idxus.113.de5.net" 
+export agk="eyJhIjoiNDc4NmQyMjRkZTJkNmM2YTcwOWRkNTIwYjZhMzczOTMiLCJ0IjoiOWJlZmZiM2YtMTc2Mi00MGU0LWJhNDgtYjEyNTU4NjM0MjQxIiwicyI6Ik5qWXhNV1ZqTW1ZdE0yVTFOQzAwTTJNMExXSmhNbVF0TkRNeE5XTTRNMkZsT1dVdyJ9"
+export argo="vwpt"
+export vmag="yes"
+export USER=root
+export fun="funus.113.de5.net"
+
+# 4. 运行 argosbx 逻辑
 chmod +x argosbx.sh
-bash argosbx.sh <<EOF
+# 【核心修正】：先执行 rep 命令清理旧的配置标记，强制重新识别变量
+bash argosbx.sh rep <<EOF
 1
 1
 EOF
 
 echo "🚀 双路由启动完毕"
 echo "🌐 节点地址: $agn"
-echo "🌐 网页地址: $fun_agn"
+echo "🌐 网页地址: $fun"
