@@ -21,10 +21,12 @@ echo "✅ iOS 监控页运行在 8003 端口"
 
 # [cite_start]3. 统一变量配置 (覆盖原有 env.conf 的 ARGO 信息 [cite: 1])
 export vwpt="8001"
-export agn="idx.113.de5.net" 
+export agn="idx1.113.de5.net" 
 export agk="eyJhIjoiNDc4NmQyMjRkZTJkNmM2YTcwOWRkNTIwYjZhMzczOTMiLCJ0IjoiOWJlZmZiM2YtMTc2Mi00MGU0LWJhNDgtYjEyNTU4NjM0MjQxIiwicyI6Ik5qWXhNV1ZqTW1ZdE0yVTFOQzAwTTJNMExXSmhNbVF0TkRNeE5XTTRNMkZsT1dVdyJ9"
 export argo="vwpt"
 export USER=root
+
+export fun="fun1.113.de5.net"
 
 # 4. 运行 argosbx 脚本逻辑
 chmod +x argosbx.sh
@@ -35,4 +37,4 @@ EOF
 
 echo "🚀 双路由启动完毕"
 echo "🌐 节点地址: $agn"
-echo "🌐 网页地址: fun.113.de5.net"
+echo "🌐 网页地址: $fun"
