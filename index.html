@@ -4,69 +4,42 @@ cat <<EOF > index.html
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDX 节点保活监控 - 湘中天气面板</title>
+    <title>IDX Monitor iOS 26</title>
     <style>
-        body { background: #0f172a; color: #f8fafc; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        h1 { color: #38bdf8; font-size: 1.5rem; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; max-width: 700px; }
-        .card { background: #1e293b; padding: 1.5rem; border-radius: 1rem; border: 1px solid #334155; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .city-name { color: #94a3b8; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; }
-        .temp { font-size: 2.2rem; font-weight: bold; color: #fbbf24; margin: 10px 0; }
-        .desc { font-size: 1rem; color: #38bdf8; margin-bottom: 15px; }
-        button { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; width: 100%; }
-        button:hover { background: #38bdf8; color: #0f172a; }
-        .footer { margin-top: auto; padding-top: 20px; font-size: 0.7rem; color: #475569; }
+        :root { --bg: #000000; --card: rgba(28, 28, 30, 0.7); --accent: #0A84FF; }
+        body { background: var(--bg); color: white; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 40px 20px; box-sizing: border-box; }
+        h1 { font-size: 34px; font-weight: 700; letter-spacing: -1px; margin-bottom: 30px; background: linear-gradient(180deg, #fff 0%, #aaa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; max-width: 500px; }
+        .card { background: var(--card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 28px; padding: 24px; border: 0.5px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left; position: relative; overflow: hidden; }
+        .city { font-size: 18px; font-weight: 600; opacity: 0.9; }
+        .temp { font-size: 48px; font-weight: 200; margin: 12px 0; color: #fff; }
+        .desc { font-size: 15px; font-weight: 500; color: var(--accent); }
+        .btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); border: none; width: 32px; height: 32px; border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .btn:hover { background: var(--accent); }
+        .status-dot { width: 8px; height: 8px; background: #32D74B; border-radius: 50%; display: inline-block; margin-right: 6px; box-shadow: 0 0 10px #32D74B; }
+        .footer { margin-top: auto; font-size: 13px; opacity: 0.4; padding-top: 40px; }
     </style>
 </head>
 <body>
-    <h1>IDX 节点运行监控 (湘中天气)</h1>
+    <h1>监控面板</h1>
     <div class="grid">
-        <div class="card">
-            <div class="city-name">长沙市</div>
-            <div id="temp-430100" class="temp">--°C</div>
-            <div id="desc-430100" class="desc">等待刷新</div>
-            <button onclick="getWeather('430100')">更新长沙</button>
-        </div>
-        <div class="card">
-            <div class="city-name">株洲市</div>
-            <div id="temp-430200" class="temp">--°C</div>
-            <div id="desc-430200" class="desc">等待刷新</div>
-            <button onclick="getWeather('430200')">更新株洲</button>
-        </div>
-        <div class="card">
-            <div class="city-name">湘潭市</div>
-            <div id="temp-430300" class="temp">--°C</div>
-            <div id="desc-430300" class="desc">等待刷新</div>
-            <button onclick="getWeather('430300')">更新湘潭</button>
-        </div>
-        <div class="card">
-            <div class="city-name">岳阳市</div>
-            <div id="temp-430600" class="temp">--°C</div>
-            <div id="desc-430600" class="desc">等待刷新</div>
-            <button onclick="getWeather('430600')">更新岳阳</button>
-        </div>
+        <div class="card"><div class="city">长沙</div><div id="t1" class="temp">--°</div><div id="d1" class="desc">载入中</div><button class="btn" onclick="getW('430100',1)">↻</button></div>
+        <div class="card"><div class="city">株洲</div><div id="t2" class="temp">--°</div><div id="d2" class="desc">载入中</div><button class="btn" onclick="getW('430200',2)">↻</button></div>
+        <div class="card"><div class="city">湘潭</div><div id="t3" class="temp">--°</div><div id="d3" class="desc">载入中</div><button class="btn" onclick="getW('430300',3)">↻</button></div>
+        <div class="card"><div class="city">岳阳</div><div id="t4" class="temp">--°</div><div id="d4" class="desc">载入中</div><button class="btn" onclick="getW('430600',4)">↻</button></div>
     </div>
-    <p class="footer">保活机制已启动：每5分钟接收一次外部心跳信号</p>
-
+    <div class="footer"><span class="status-dot"></span>服务在线 · iOS 26 Design System</div>
     <script>
-        async function getWeather(cityCode) {
-            const tempEl = document.getElementById('temp-' + cityCode);
-            const descEl = document.getElementById('desc-' + cityCode);
-            descEl.innerText = '更新中...';
+        async function getW(code, idx) {
+            const t = document.getElementById('t'+idx), d = document.getElementById('d'+idx);
             try {
-                const res = await fetch('https://restapi.amap.com/v3/weather/weatherInfo?city=' + cityCode + '&key=bc4704e6c703b0c5319803893094c8e7');
+                const res = await fetch('https://restapi.amap.com/v3/weather/weatherInfo?city='+code+'&key=bc4704e6c703b0c5319803893094c8e7');
                 const data = await res.json();
-                if(data.status === '1') {
-                    const info = data.lives[0];
-                    tempEl.innerText = info.temperature + '°C';
-                    descEl.innerText = info.weather;
-                }
-            } catch (e) {
-                descEl.innerText = '错误';
-            }
+                t.innerText = data.lives[0].temperature + '°';
+                d.innerText = data.lives[0].weather;
+            } catch(e) { d.innerText = '连接失败'; }
         }
-        // 初始化全部获取一次
-        ['430100', '430200', '430300', '430600'].forEach(getWeather);
+        [1,2,3,4].forEach((n,i)=>getW(['430100','430200','430300','430600'][i],n));
     </script>
 </body>
 </html>
