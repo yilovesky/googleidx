@@ -7,6 +7,7 @@
   };
   idx.previews.enable = true;
   idx.previews.previews.web = {
+    # 预览现在指向保活的 8080 端口
     command = ["sleep" "infinity"];
     manager = "web";
   };
