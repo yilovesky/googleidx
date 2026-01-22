@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDX 服务保活面板</title>
+    <style>
+        body { background: #0f172a; color: #f8fafc; font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: #1e293b; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); width: 350px; text-align: center; border: 1px solid #334155; }
+        h1 { font-size: 1.25rem; color: #38bdf8; margin-bottom: 1.5rem; }
+        .weather-card { background: #0f172a; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .temp { font-size: 3rem; font-weight: bold; margin: 0.5rem 0; color: #fbbf24; }
+        .desc { font-size: 1.1rem; color: #94a3b8; }
+        .city { font-size: 0.9rem; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.1em; }
+        button { background: #38bdf8; color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: bold; cursor: pointer; transition: all 0.2s; width: 100%; }
+        button:hover { background: #7dd3fc; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        .footer { margin-top: 1rem; font-size: 0.75rem; color: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IDX 保活监控中</h1>
+        <div class="weather-card">
+            <div class="city">长沙市</div>
+            <div id="temp" class="temp">--°C</div>
+            <div id="desc" class="desc">正在获取天气...</div>
+        </div>
+        <button onclick="getWeather()">点击刷新长沙天气</button>
+        <div class="footer" id="update-time">初始化中...</div>
+    </div>
+
+    <script>
+        async function getWeather() {
+            const btn = document.querySelector('button');
+            btn.innerText = '更新中...';
+            try {
+                // 使用公共 API 获取长沙天气 (Adcode: 430100)
+                const res = await fetch('https://restapi.amap.com/v3/weather/weatherInfo?city=430100&key=bc4704e6c703b0c5319803893094c8e7');
+                const data = await res.json();
+                if (data.status === '1') {
+                    const info = data.lives[0];
+                    document.getElementById('temp').innerText = info.temperature + '°C';
+                    document.getElementById('desc').innerText = info.reporttime.split(' ')[1] + ' ' + info.weather;
+                    document.getElementById('update-time').innerText = '最后同步: ' + new Date().toLocaleTimeString();
+                }
+            } catch (e) {
+                document.getElementById('desc').innerText = '获取失败';
+            } finally {
+                btn.innerText = '点击刷新长沙天气';
+            }
+        }
+        // 页面加载时自动获取一次
+        getWeather();
+    </script>
+</body>
+</html>
