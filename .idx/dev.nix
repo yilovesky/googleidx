@@ -14,8 +14,8 @@
     enable = true;
     previews = {
       web = {
-        # 强制 Node.js 读取 index.html 吐出流，解决 http-server 的权限转圈 Bug
-        command = ["node" "-e" "const http = require('http'), fs = require('fs'); http.createServer((req, res) => { res.writeHead(200, {'Content-Type': 'text/html'}); try { res.end(fs.readFileSync('index.html')); } catch(e) { res.end('<h1>Index.html Not Found</h1>'); } }).listen(8080);"];
+        # 强制 Node.js 监听所有网卡并直接输出 index.html 内容
+        command = ["node" "-e" "const http = require('http'), fs = require('fs'); http.createServer((req, res) => { res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'}); try { res.end(fs.readFileSync('index.html')); } catch(e) { res.end('<h1>Wait... Index file missing</h1>'); } }).listen(8080, '0.0.0.0');"];
         manager = "web";
       };
     };
