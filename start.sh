@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 1. 下载并启动哪吒
+# 1. 自动架构下载哪吒 (保持 A 代码逻辑)
 ARCH=$(uname -m)
 [ "$ARCH" = "x86_64" ] && URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_amd64.zip" || URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_arm64.zip"
 
@@ -16,21 +16,19 @@ pkill -9 python3
 nohup python3 -m http.server 8003 > web.log 2>&1 &
 echo "✅ iOS 监控页运行在 8003 端口"
 
-# 3. 统一变量配置 (补全 vmag 开关)
+# 3. 统一变量配置 (必须包含 vmag)
 export vwpt="8001"
 export agn="idxus.113.de5.net" 
 export agk="eyJhIjoiNDc4NmQyMjRkZTJkNmM2YTcwOWRkNTIwYjZhMzczOTMiLCJ0IjoiOWJlZmZiM2YtMTc2Mi00MGU0LWJhNDgtYjEyNTU4NjM0MjQxIiwicyI6Ik5qWXhNV1ZqTW1ZdE0yVTFOQzAwTTJNMExXSmhNbVF0TkRNeE5XTTRNMkZsT1dVdyJ9"
 export argo="vwpt"
-export vmag="yes"    # ⚠️ 必须有这个，脚本才会输出带 ARGO 域名的节点！
+export vmag="yes"
 export USER=root
 export fun="funus.113.de5.net"
 
 # 4. 运行 argosbx 逻辑
-# 清理缓存，确保脚本重新识别变量
-rm -rf $HOME/agsbx/sbargoym.log $HOME/agsbx/sbargotoken.log $HOME/agsbx/jh.txt
-
 chmod +x argosbx.sh
-bash argosbx.sh <<EOF
+# 【核心修正】：先执行 rep 命令清理旧的配置标记，强制重新识别变量
+bash argosbx.sh rep <<EOF
 1
 1
 EOF
