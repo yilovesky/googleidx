@@ -14,7 +14,7 @@
     enable = true;
     previews = {
       web = {
-        # 监听 8080 端口，展示 index.html
+        # 使用 Python3 启动 8080 端口静态服务
         command = ["python3" "-m" "http.server" "8080"];
         manager = "web";
       };
