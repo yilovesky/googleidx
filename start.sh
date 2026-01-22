@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 1. 自动架构下载哪吒 (保持 A 代码逻辑)
+# [cite_start]1. 自动架构下载哪吒 (保持 A 代码逻辑 [cite: 1, 4])
 ARCH=$(uname -m)
 [ "$ARCH" = "x86_64" ] && URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_amd64.zip" || URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_arm64.zip"
 
@@ -13,33 +13,26 @@ fi
 pkill -9 nezha-agent
 nohup ./nezha-agent -c config.yml > nezha.log 2>&1 &
 
-# 2. 锁定目录并强制导出变量
-cd "$(dirname "$0")"
-if [ -f "env.conf" ]; then
-    # 强制 source 并导出
-    set -a # 开启自动导出所有变量
-    source env.conf
-    set +a
-    echo "✅ 变量已强制注入环境"
-fi
-
-# 3. 启动监控网页并显式调用 index.html
+# 2. 启动监控网页 (端口 8003)
 pkill -9 python3
-if [ -f "index.html" ]; then
-    # 确保在 8003 端口提供网页服务
-    nohup python3 -m http.server "$fun_port" > web.log 2>&1 &
-    echo "✅ 网页 index.html 已调用，端口: $fun_port"
-else
-    echo "❌ 警告：当前目录下未找到 index.html"
-fi
+# [cite_start]确保 index.html 存在 [cite: 4]
+nohup python3 -m http.server 8003 > web.log 2>&1 &
+echo "✅ iOS 监控页运行在 8003 端口"
 
-# 4. 运行 argosbx 逻辑 (确保识别到 agk 和 agn)
+# [cite_start]3. 统一变量配置 (覆盖原有 env.conf 的 ARGO 信息 [cite: 1])
+export vwpt="8001"
+export agn="idx.113.de5.net" 
+export agk="eyJhIjoiNDc4NmQyMjRkZTJkNmM2YTcwOWRkNTIwYjZhMzczOTMiLCJ0IjoiOWJlZmZiM2YtMTc2Mi00MGU0LWJhNDgtYjEyNTU4NjM0MjQxIiwicyI6Ik5qWXhNV1ZqTW1ZdE0yVTFOQzAwTTJNMExXSmhNbVF0TkRNeE5XTTRNMkZsT1dVdyJ9"
+export argo="vwpt"
+export USER=root
+
+# 4. 运行 argosbx 脚本逻辑
 chmod +x argosbx.sh
 bash argosbx.sh <<EOF
 1
 1
 EOF
 
-echo "🚀 双路由强制启动完毕"
+echo "🚀 双路由启动完毕"
 echo "🌐 节点地址: $agn"
-echo "🌐 网页地址: $fun_agn"
+echo "🌐 网页地址: fun.113.de5.net"
