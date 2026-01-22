@@ -1,17 +1,41 @@
 #!/bin/bash
 
-# 1. 载入变量
-[ -f "env.conf" ] && source env.conf
+# 1. 自动识别架构并下载/更新哪吒
+ARCH=$(uname -m)
+if [ "$ARCH" = "x86_64" ]; then
+    URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_amd64.zip"
+else
+    URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_arm64.zip"
+fi
 
-# 2. 哪吒启动 (读取 config.yml)
+if [ ! -f "nezha-agent" ]; then
+    echo "正在根据架构 ($ARCH) 下载哪吒 Agent..."
+    wget -O nezha-agent.zip $URL && unzip -o nezha-agent.zip && chmod +x nezha-agent
+    rm -f nezha-agent.zip
+fi
+
+# 2. 启动哪吒监控 (读取 config.yml)
 pkill -9 nezha-agent
-chmod +x nezha-agent
-nohup ./nezha-agent -c config.yml > /dev/null 2>&1 &
+nohup ./nezha-agent -c config.yml > nezha.log 2>&1 &
+echo "✅ 哪吒已通过 config.yml 启动"
 
-# 3. 启动保活 Web
+# 3. 加载变量并启动节点
+if [ -f "env.conf" ]; then
+    source env.conf
+    echo "✅ 已载入 env.conf 变量"
+fi
+
+# 启动保活 Web
 pkill -9 python3
-nohup python3 -m http.server 8001 > /dev/null 2>&1 &
+nohup python3 -m http.server 8001 > web.log 2>&1 &
 
-# 4. 运行 argosbx (此时因为它已经 source 了 env.conf，变量已在内存)
-# 脚本会检测到 vwpt="8001"，从而自动开始安装，不再提示“未安装”
-bash argosbx.sh
+# 交互式模式启动：因为已 source 变量，脚本会直接跳过报错进入安装逻辑
+bash argosbx.sh <<EOF
+1
+1
+EOF
+
+# 4. 自动更新 sub.txt 方便查看
+sleep 10
+bash argosbx.sh list | grep -E 'vless://|vmess://|trojan://' > sub.txt
+echo "✅ 订阅文件已更新"
