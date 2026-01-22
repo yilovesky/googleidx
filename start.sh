@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 1. 下载哪吒 (保持 A 代码逻辑) 
+# [cite_start]1. 自动架构下载哪吒 (保持 A 代码逻辑 [cite: 1, 4])
 ARCH=$(uname -m)
 [ "$ARCH" = "x86_64" ] && URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_amd64.zip" || URL="https://github.com/nezhahq/agent/releases/latest/download/nezha-agent_linux_arm64.zip"
 
@@ -9,37 +9,30 @@ if [ ! -f "nezha-agent" ]; then
     rm -f nezha-agent.zip
 fi
 
+# 启动哪吒
 pkill -9 nezha-agent
 nohup ./nezha-agent -c config.yml > nezha.log 2>&1 &
 
-# 2. 启动 8003 端口的 iOS 监控网页 
-if [ -f "fun.conf" ]; then
-    source fun.conf
-fi
+# 2. 启动监控网页 (端口 8003)
 pkill -9 python3
-nohup python3 -m http.server $fun_port > web.log 2>&1 &
-echo "✅ 监控页运行在 $fun_port 端口"
+# [cite_start]确保 index.html 存在 [cite: 4]
+nohup python3 -m http.server 8003 > web.log 2>&1 &
+echo "✅ iOS 监控页运行在 8003 端口"
 
-# 3. 运行原有 argosbx 逻辑 (启动第一个隧道：节点) 
-if [ -f "env.conf" ]; then
-    source env.conf
-fi
+# [cite_start]3. 统一变量配置 (覆盖原有 env.conf 的 ARGO 信息 [cite: 1])
+export vwpt="8001"
+export agn="idx.113.de5.net" 
+export agk="eyJhIjoiNDc4NmQyMjRkZTJkNmM2YTcwOWRkNTIwYjZhMzczOTMiLCJ0IjoiOWJlZmZiM2YtMTc2Mi00MGU0LWJhNDgtYjEyNTU4NjM0MjQxIiwicyI6Ik5qWXhNV1ZqTW1ZdE0yVTFOQzAwTTJNMExXSmhNbVF0TkRNeE5XTTRNMkZsT1dVdyJ9"
+export argo="vwpt"
+export USER=root
+
+# 4. 运行 argosbx 脚本逻辑
 chmod +x argosbx.sh
-# 这一步会启动 8001 端口的隧道进程 
 bash argosbx.sh <<EOF
 1
 1
 EOF
 
-# 4. 强制启动第二个独立进程 (用于网页域名) 
-CLOUDFLARE_PATH="$HOME/agsbx/cloudflared"
-sleep 5 # 等待第一个进程稳定
-
-if [ -f "$CLOUDFLARE_PATH" ]; then
-    echo "✅ 正在启动第二个独立隧道进程..."
-    # 使用 --no-autoupdate 且不引用默认 config 路径，确保与第一个进程隔离
-    nohup "$CLOUDFLARE_PATH" tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token "$fun_agk" > fun_argo.log 2>&1 &
-fi
-
-echo "🚀 节点域名: $agn"
-echo "🚀 网站域名: $fun_agn"
+echo "🚀 双路由启动完毕"
+echo "🌐 节点地址: $agn"
+echo "🌐 网页地址: fun.113.de5.net"
