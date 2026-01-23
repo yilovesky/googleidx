@@ -1,4 +1,4 @@
-name: Secure Random Monitor
+name: Secure Random Monitor Pro
 
 on:
   schedule:
@@ -20,7 +20,7 @@ jobs:
         env:
           TARGET_URL: ${{ secrets.TARGET_URL }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          TG_BOT_TOKEN: ${{ secrets.TG_TOKEN }}  # 注意这里：左边是代码用的名，右边是你截图里的 TG_TOKEN
+          TG_BOT_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
         run: |
           node -e "
@@ -31,41 +31,63 @@ jobs:
             console.log('随机等待启动: ' + (startWait/60000).toFixed(1) + ' 分钟');
             await new Promise(r => setTimeout(r, startWait));
 
-            const browser = await chromium.launch();
+            // 强制启用 GPU 加速模拟和 1080p 窗口
+            const browser = await chromium.launch({
+              args: ['--disable-dev-shm-usage', '--window-size=1920,1080']
+            });
+            
             const context = await browser.newContext({
               extraHTTPHeaders: { 'Authorization': 'Bearer ' + process.env.HF_TOKEN },
-              userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+              userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+              viewport: { width: 1920, height: 1080 }
             });
+            
             const page = await context.newPage();
-            await page.setViewportSize({ width: 1280, height: 720 });
+            const exec = require('child_process').execSync;
 
             try {
-              // 使用环境变量中的网址
-              console.log('正在访问目标页面...');
-              await page.goto(process.env.TARGET_URL, { waitUntil: 'networkidle', timeout: 90000 });
+              console.log('正在访问目标页面 (上限 4 分钟以应对冷启动)...');
+              
+              // 关键改进：改用 domcontentloaded 避免因某个小资源加载失败而卡死整个任务
+              await page.goto(process.env.TARGET_URL, { 
+                waitUntil: 'domcontentloaded', 
+                timeout: 240000 
+              });
 
-              // 2. 随机停留时间 (8-15分钟左右)
+              // 给 Docker 容器 45 秒时间完成内部 UI 渲染
+              console.log('页面基础结构已就绪，等待容器渲染内部桌面...');
+              await new Promise(r => setTimeout(r, 45000));
+
+              // 2. 随机停留时间 (8-15分钟)
               const stayTime = Math.floor(Math.random() * (15 - 8 + 1) + 8) * 60 * 1000;
               console.log('计划停留时长: ' + (stayTime/60000).toFixed(1) + ' 分钟');
               
               const startTime = Date.now();
               while (Date.now() - startTime < stayTime) {
-                await page.mouse.wheel(0, 100);
-                await new Promise(r => setTimeout(r, 60000)); // 每分钟动一下模拟活跃
+                // 模拟随机鼠标移动和滚动，增加活跃度特征
+                await page.mouse.move(Math.random() * 500, Math.random() * 500);
+                await page.mouse.wheel(0, Math.floor(Math.random() * 200));
+                await new Promise(r => setTimeout(r, 60000)); 
               }
 
-              // 3. 截图并 TG 推送
-              await page.screenshot({ path: 'check.png' });
-              const exec = require('child_process').execSync;
-              const caption = '🛡️ 安全巡检报告\n⏱️ 停留时长: ' + (stayTime/60000).toFixed(1) + ' 分钟\n✅ 已完成保活交互';
+              // 3. 最终截图
+              console.log('生成保活报告...');
+              await page.screenshot({ path: 'check.png', fullPage: false });
               
+              const caption = '🛡️ 巡检报告 [1080p]\n⏰ 时间: ' + new Date().toLocaleString() + '\n⏱️ 停留: ' + (stayTime/60000).toFixed(1) + ' min\n✅ 状态: 刷新成功';
               exec('curl -s -F \"chat_id=' + process.env.TG_CHAT_ID + '\" -F \"photo=@check.png\" -F \"caption=' + caption + '\" https://api.telegram.org/bot' + process.env.TG_BOT_TOKEN + '/sendPhoto');
 
             } catch (err) {
-              console.error('任务失败:', err.message);
-              const exec = require('child_process').execSync;
-              exec('curl -s -d \"chat_id=' + process.env.TG_CHAT_ID + '&text=⚠️ 巡检异常: ' + err.message + '\" https://api.telegram.org/bot' + process.env.TG_BOT_TOKEN + '/sendMessage');
+              console.error('任务异常:', err.message);
+              // 即使出错也强制截一张图发送，方便定位问题（是卡在 Building 还是报错）
+              try {
+                await page.screenshot({ path: 'error.png' });
+                exec('curl -s -F \"chat_id=' + process.env.TG_CHAT_ID + '\" -F \"photo=@error.png\" -F \"caption=⚠️ 巡检异常报告\n错误详情: ' + err.message + '\" https://api.telegram.org/bot' + process.env.TG_BOT_TOKEN + '/sendPhoto');
+              } catch (e) {
+                exec('curl -s -d \"chat_id=' + process.env.TG_CHAT_ID + '&text=❌ 巡检彻底失败且无法截图: ' + err.message + '\" https://api.telegram.org/bot' + process.env.TG_BOT_TOKEN + '/sendMessage');
+              }
             }
+            
             await browser.close();
           })();
           "
