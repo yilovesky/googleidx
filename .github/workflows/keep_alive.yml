@@ -3,7 +3,7 @@ name: "IDX 4-Zone Random Keeper"
 on:
   schedule:
     # 保持高频率触发，具体的延迟在脚本内部实现
-    - cron: '*/10 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 
 jobs:
