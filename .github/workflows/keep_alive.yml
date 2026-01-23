@@ -1,90 +1,72 @@
-name: "IDX 4-Zone Random Keeper"
+name: Secure Random Monitor
 
 on:
   schedule:
-    # 保持高频率触发，具体的延迟在脚本内部实现
-    - cron: '*/20 * * * *'
+    # 设定基准：大约每 10 小时运行一次
+    - cron: '15 */10 * * *'
   workflow_dispatch:
 
 jobs:
-  dynamic_ping:
+  flexible-keep-alive:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
+      - uses: actions/checkout@v4
+      - name: Install Tools
         run: |
-          pip install playwright requests
-          playwright install chromium
+          npm install playwright
+          npx playwright install chromium --with-deps
 
-      - name: Random Delay and Sequential Monitor
+      - name: Run Random Session
         env:
-          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          # 从 GitHub Secrets 中读取所有变量
+          TARGET_URL: ${{ secrets.TARGET_URL }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
         run: |
-          python <<EOF
-          import asyncio
-          import random
-          import time
-          import os
-          from playwright.async_api import async_playwright
-          import requests
+          node -e "
+          const { chromium } = require('playwright');
+          (async () => {
+            // 1. 随机延迟启动 (0-40分钟)
+            const startWait = Math.floor(Math.random() * 40 * 60 * 1000);
+            console.log('随机等待启动: ' + (startWait/60000).toFixed(1) + ' 分钟');
+            await new Promise(r => setTimeout(r, startWait));
 
-          async def run_task():
-              # 1. 实现 2-4 分钟的随机性 (以秒为单位)
-              # 注意：GitHub Action 启动本身有延迟，这里做微调
-              wait_time = random.randint(60, 120) 
-              print(f"随机延迟触发：将在 {wait_time} 秒后开始访问...")
-              # time.sleep(wait_time) # 如果需要极端不规则，取消此行注释
+            const browser = await chromium.launch();
+            const context = await browser.newContext({
+              extraHTTPHeaders: { 'Authorization': 'Bearer ' + process.env.HF_TOKEN },
+              userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+            });
+            const page = await context.newPage();
+            await page.setViewportSize({ width: 1280, height: 720 });
 
-              urls = [
-                  {"name": "US区", "url": "http://funus.113.de5.net"},
-                  {"name": "BE区", "url": "http://funbe.113.de5.net"},
-                  {"name": "TW区", "url": "http://funtw.113.de5.net"},
-                  {"name": "NL区", "url": "http://funnl.113.de5.net"}
-              ]
+            try {
+              // 使用环境变量中的网址
+              console.log('正在访问目标页面...');
+              await page.goto(process.env.TARGET_URL, { waitUntil: 'networkidle', timeout: 90000 });
 
-              token = os.getenv('TG_TOKEN')
-              chat_id = os.getenv('TG_CHAT_ID')
+              // 2. 随机停留时间 (8-15分钟左右)
+              const stayTime = Math.floor(Math.random() * (15 - 8 + 1) + 8) * 60 * 1000;
+              console.log('计划停留时长: ' + (stayTime/60000).toFixed(1) + ' 分钟');
+              
+              const startTime = Date.now();
+              while (Date.now() - startTime < stayTime) {
+                await page.mouse.wheel(0, 100);
+                await new Promise(r => setTimeout(r, 60000)); // 每分钟动一下模拟活跃
+              }
 
-              async with async_playwright() as p:
-                  browser = await p.chromium.launch()
-                  # 模拟 iPhone 15 视图
-                  context = await browser.new_context(
-                      viewport={'width': 393, 'height': 852},
-                      user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
-                  )
-                  
-                  # 2. 轮流顺序访问
-                  for site in urls:
-                      page = await context.new_page()
-                      try:
-                          print(f"正在轮流访问: {site['name']}...")
-                          await page.goto(site['url'], timeout=60000, wait_until="networkidle")
-                          await asyncio.sleep(8) # 等待天气和时间脚本加载
+              // 3. 截图并 TG 推送
+              await page.screenshot({ path: 'check.png' });
+              const exec = require('child_process').execSync;
+              const caption = '🛡️ 安全巡检报告\n⏱️ 停留时长: ' + (stayTime/60000).toFixed(1) + ' 分钟\n✅ 已完成保活交互';
+              
+              exec('curl -s -F \"chat_id=' + process.env.TG_CHAT_ID + '\" -F \"photo=@check.png\" -F \"caption=' + caption + '\" https://api.telegram.org/bot' + process.env.TG_BOT_TOKEN + '/sendPhoto');
 
-                          screenshot_path = f"{site['name']}.png"
-                          await page.screenshot(path=screenshot_path)
-
-                          # 发送至 TG
-                          with open(screenshot_path, 'rb') as f:
-                              requests.post(
-                                  f"https://api.telegram.org/bot{token}/sendPhoto",
-                                  data={'chat_id': chat_id, 'caption': f"📸 {site['name']} 状态监控\n地址: {site['url']}\n延迟设定: {wait_time}s"},
-                                  files={'photo': f}
-                              )
-                      except Exception as e:
-                          requests.post(
-                              f"https://api.telegram.org/bot{token}/sendMessage",
-                              data={'chat_id': chat_id, 'text': f"⚠️ {site['name']} 离线\n{str(e)}"}
-                          )
-                      finally:
-                          await page.close()
-                  
-                  await browser.close()
-
-          asyncio.run(run_task())
-          EOF
+            } catch (err) {
+              console.error('任务失败:', err.message);
+              const exec = require('child_process').execSync;
+              exec('curl -s -d \"chat_id=' + process.env.TG_CHAT_ID + '&text=⚠️ 巡检异常: ' + err.message + '\" https://api.telegram.org/bot' + process.env.TG_BOT_TOKEN + '/sendMessage');
+            }
+            await browser.close();
+          })();
+          "
