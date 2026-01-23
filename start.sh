@@ -18,12 +18,12 @@ echo "✅ iOS 监控页运行在 8003 端口"
 
 # 3. 统一变量配置 (必须包含 vmag)
 export vwpt="8001"
-export agn="idxus.113.de5.net" 
+export agn="idxbe.113.de5.net" 
 export agk="eyJhIjoiNDc4NmQyMjRkZTJkNmM2YTcwOWRkNTIwYjZhMzczOTMiLCJ0IjoiOWJlZmZiM2YtMTc2Mi00MGU0LWJhNDgtYjEyNTU4NjM0MjQxIiwicyI6Ik5qWXhNV1ZqTW1ZdE0yVTFOQzAwTTJNMExXSmhNbVF0TkRNeE5XTTRNMkZsT1dVdyJ9"
 export argo="vwpt"
 export vmag="yes"
 export USER=root
-export fun="funus.113.de5.net"
+export fun="funbe.113.de5.net"
 
 # 4. 运行 argosbx 逻辑
 chmod +x argosbx.sh
