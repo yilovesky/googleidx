@@ -44,7 +44,7 @@ jobs:
                   {"name": "US区", "url": "http://funus.113.de5.net"},
                   {"name": "BE区", "url": "http://funbe.113.de5.net"},
                   {"name": "TW区", "url": "http://funtw.113.de5.net"},
-                  {"name": "SG区", "url": "http://funsg.113.de5.net"}
+                  {"name": "NL区", "url": "http://funnl.113.de5.net"}
               ]
 
               token = os.getenv('TG_TOKEN')
