@@ -18,10 +18,9 @@ jobs:
 
       - name: Run Random Session
         env:
-          # 从 GitHub Secrets 中读取所有变量
           TARGET_URL: ${{ secrets.TARGET_URL }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_BOT_TOKEN: ${{ secrets.TG_TOKEN }}  # 注意这里：左边是代码用的名，右边是你截图里的 TG_TOKEN
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
         run: |
           node -e "
