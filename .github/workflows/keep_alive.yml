@@ -1,4 +1,4 @@
-name: Secure Random Monitor Pro
+name: Secure Random Monitor V2
 
 # 防止并发冲突：同一时间只允许一个工作流运行，避免重复启动
 concurrency:
