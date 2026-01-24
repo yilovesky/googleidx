@@ -1,0 +1,45 @@
+name: Cron Test and TG Screenshot
+
+on:
+  schedule:
+    # 这里的 cron 是 UTC 时间。 */5 * * * * 表示每 5 分钟触发一次
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # 允许手动点击按钮测试
+
+jobs:
+  check_and_screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Playwright
+        run: |
+          npm install -g playwright
+          npx playwright install chromium --with-deps
+
+      - name: Take Screenshot
+        run: |
+          # 使用 node 脚本进行截图
+          cat << 'EOF' > screenshot.js
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+            await page.goto('https://www.google.com');
+            await page.screenshot({ path: 'google.png' });
+            await browser.close();
+          })();
+          EOF
+          node screenshot.js
+
+      - name: Send Telegram Notification
+        if: success()
+        run: |
+          TIME=$(date "+%Y-%m-%d %H:%M:%S")
+          curl -v -F "chat_id=${{ secrets.TG_CHAT_ID }}" \
+               -F "caption=Cron Test Success! 
+          Time: $TIME (UTC)
+          Status: Google Accessed." \
+               -F "photo=@google.png" \
+               https://api.telegram.org/bot${{ secrets.TG_TOKEN }}/sendPhoto
